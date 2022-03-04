@@ -1,2 +1,6 @@
+# Pycharm stuff
 /.idea/
+# Reference notebook
 /churn_notebook.ipynb
+# Viartual env stuff
+/.venv/
