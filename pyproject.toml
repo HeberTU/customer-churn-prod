@@ -7,6 +7,12 @@ authors = ["Heber Trujillo <heber.trj.urt@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 pydantic = "^1.9.0"
+flake8 = "^4.0.1"
+black = "^22.1.0"
+isort = "^5.10.1"
+pydocstyle = "^6.1.1"
+autopep8 = "^1.6.0"
+pylint = "^2.12.2"
 
 [tool.poetry.dev-dependencies]
 
