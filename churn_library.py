@@ -2,10 +2,14 @@
 
 
 # import libraries
-from core.settings import Settings
+import pandas as pd
+import pandera as pa
+from pandera.typing import DataFrame
+
+from core.schemas.bank import BankInputSchema, BankOutputSchema
 
 
-def import_data(settings: Settings):
+def import_data(pth: str) -> DataFrame[BankOutputSchema]:
     """
     returns dataframe for the csv found at pth
 
@@ -14,7 +18,21 @@ def import_data(settings: Settings):
     output:
             df: pandas dataframe
     """
-    pass
+    df = pd.read_csv(pth)
+
+    df.columns = [col.lower() for col in df.columns]
+
+    @pa.check_types
+    def check_inputs(
+            df: DataFrame[BankInputSchema]
+    ) -> DataFrame[BankOutputSchema]:
+        return df.assign(
+            churn=lambda x: x.attrition_flag.isin(['Attrited Customer'])
+        )
+
+    df = check_inputs(df)
+
+    return df
 
 
 def perform_eda(df):
@@ -58,6 +76,7 @@ def perform_feature_engineering(df, response):
               y_test: y testing data
     """
 
+
 def classification_report_image(y_train,
                                 y_test,
                                 y_train_preds_lr,
@@ -93,6 +112,7 @@ def feature_importance_plot(model, X_data, output_pth):
              None
     """
     pass
+
 
 def train_models(X_train, X_test, y_train, y_test):
     """

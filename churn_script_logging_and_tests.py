@@ -1,16 +1,18 @@
 import os
 import logging
+from typing import Callable
 
-# import churn_library_solution as cls
+from core.settings import settings
+import churn_library as cl
 
 logging.basicConfig(
-    filename='./logs/churn_library.log',
+    filename=settings.LOGS_PATH / 'churn_library.log',
     level=logging.INFO,
     filemode='w',
     format='%(name)s - %(levelname)s - %(message)s')
 
 
-def test_import(import_data):
+def test_import(import_data: Callable) -> None:
     """
     test data import - this example is completed for you to assist with
     the other test functions
@@ -56,4 +58,4 @@ def test_train_models(train_models):
 
 
 if __name__ == "__main__":
-    pass
+    test_import(cl.import_data)
