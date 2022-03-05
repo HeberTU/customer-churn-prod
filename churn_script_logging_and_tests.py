@@ -33,10 +33,35 @@ def test_import(import_data: Callable) -> None:
         raise err
 
 
-def test_eda(perform_eda):
+def test_eda(perform_eda: Callable):
     """
     test perform eda function
     """
+    df = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+    OUT_FILES = {'churn_distribution.png', 'customer_age_distribution.png',
+                 'heatmap.png', 'marital_status_distribution.png',
+                 'total_transaction_distribution.png'}
+
+    try:
+        perform_eda(df)
+        logging.info("Testing import_data: SUCCESS")
+    except KeyError as err:
+        logging.error(
+            f"Testing perform_eda: Column {err.args[0]} not"
+            f" found in input schema.")
+        raise err
+
+    files_created = set(os.listdir(settings.EDA_PATH))
+    missing_files = OUT_FILES - files_created
+
+    if len(missing_files)>0:
+        logging.error(
+            f"Testing perform_eda files: Files: {missing_files} not"
+            f" found at output path.")
+        raise FileNotFoundError
+
+    else:
+        logging.info("Testing perform_eda files: SUCCESS")
 
 
 def test_encoder_helper(encoder_helper):
@@ -58,4 +83,6 @@ def test_train_models(train_models):
 
 
 if __name__ == "__main__":
+
     test_import(cl.import_data)
+    test_eda(cl.perform_eda)

@@ -6,6 +6,10 @@ import pandas as pd
 import pandera as pa
 from pandera.typing import DataFrame
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from core.settings import settings
 from core.schemas.bank import BankInputSchema, BankOutputSchema
 
 
@@ -35,7 +39,7 @@ def import_data(pth: str) -> DataFrame[BankOutputSchema]:
     return df
 
 
-def perform_eda(df):
+def perform_eda(df: DataFrame[BankOutputSchema]) -> None:
     """
     perform eda on df and save figures to images folder
     input:
@@ -44,7 +48,32 @@ def perform_eda(df):
     output:
             None
     """
-    pass
+    HIST_COLUMNS = ['churn', 'customer_age']
+
+    # Histograms
+    for col in HIST_COLUMNS:
+        plt.figure(figsize=(20, 10))
+        df[col].hist()
+        plt.savefig(
+            fname=settings.EDA_PATH / f'{col}_distribution.png')
+
+    # Marital status distribution
+    plt.figure(figsize=(20, 10))
+    df.marital_status.value_counts('normalize').plot(kind='bar')
+    plt.savefig(
+        fname=settings.EDA_PATH / 'marital_status_distribution.png')
+
+    # total transaction distribution
+    plt.figure(figsize=(20, 10))
+    sns.distplot(df.total_trans_ct)
+    plt.savefig(
+        fname=settings.EDA_PATH / 'total_transaction_distribution.png')
+
+    # Heatmap
+    plt.figure(figsize=(20, 10))
+    sns.heatmap(df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
+    plt.savefig(
+        fname=settings.EDA_PATH / 'heatmap.png')
 
 
 def encoder_helper(df, category_lst, response):
