@@ -4,3 +4,5 @@
 /churn_notebook.ipynb
 # Viartual env stuff
 /.venv/
+/scripts/debugging/
+/logs/churn_library.log

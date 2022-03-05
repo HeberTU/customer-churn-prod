@@ -41,5 +41,8 @@ class Settings(BaseSettings):
     if not os.path.exists(MODELS_PATH):
         os.makedirs(MODELS_PATH)
 
+    LOGS_PATH: DirectoryPath = PACKAGE_PATH / "logs"
+    if not os.path.exists(LOGS_PATH):
+        os.makedirs(LOGS_PATH)
 
 settings = Settings()
