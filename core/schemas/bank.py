@@ -39,3 +39,12 @@ class BankOutputSchema(BankInputSchema):
     @pa.check("Churn", name="valid_churn")
     def custom_check(cls, Churn: Series[int]) -> Series[bool]:
         return Churn.isin([0, 1])
+
+class BankMLSchema(BankOutputSchema):
+    """Bank data output schema."""
+
+    Gender_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Education_Level_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Marital_Status_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Income_Category_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Card_Category_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
