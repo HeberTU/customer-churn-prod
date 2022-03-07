@@ -2,7 +2,7 @@
 
 
 # import libraries
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 import pandas as pd
 import pandera as pa
@@ -10,6 +10,8 @@ import seaborn as sns
 from pandera.typing import DataFrame
 
 import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
 
 from core.schemas.bank import \
     BankInputSchema, \
@@ -128,7 +130,14 @@ def encoder_helper(
     return df
 
 
-def perform_feature_engineering(df, response):
+def perform_feature_engineering(
+        df: Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]],
+        response: Optional[str]
+) -> Tuple[
+    Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]],
+    Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]],
+    pd.Series, pd.Series
+]:
     """
     input:
               df: pandas dataframe
@@ -141,6 +150,21 @@ def perform_feature_engineering(df, response):
               y_train: y training data
               y_test: y testing data
     """
+
+    MLSchema = get_ml_schema(response=response)
+
+    keep_cols = list(MLSchema.to_schema().columns.keys())
+
+    X = df[keep_cols].copy()
+    y = df['Churn']
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=0.3,
+        random_state=42
+    )
+
+    return X_train, X_test, y_train, y_test
 
 
 def classification_report_image(

@@ -2,6 +2,8 @@ import os
 import logging
 from typing import Callable
 
+from math import isclose
+
 from core.settings import settings
 import churn_library as cl
 
@@ -104,10 +106,56 @@ def test_encoder_helper(encoder_helper: Callable) -> None:
                 f" {col} do not match with Churn mean by category.")
 
 
-def test_perform_feature_engineering(perform_feature_engineering):
+def test_perform_feature_engineering(
+        perform_feature_engineering: Callable
+) -> None:
     """
     test perform_feature_engineering
     """
+    category_lst = [
+        'Gender',
+        'Education_Level',
+        'Marital_Status',
+        'Income_Category',
+        'Card_Category',
+    ]
+
+    df = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+
+    df = cl.encoder_helper(
+        df=df,
+        category_lst=category_lst,
+        response='Churn'
+    )
+
+    X_train, X_test, y_train, y_test = perform_feature_engineering(
+        df=df,
+        response='Churn'
+    )
+
+    validation_dict = {
+        'X_train': X_train,
+        'X_test': X_test,
+        'y_train':y_train,
+        'y_test': y_test
+    }
+
+    for key, val in validation_dict.items():
+
+        if 'train' in key:
+            percentage = 0.7
+        else:
+            percentage = 0.3
+
+        try:
+            assert isclose(val.shape[0], df.shape[0] * percentage, abs_tol=1)
+            logging.info(f"Testing test_perform_feature_engineering: SUCCESS "
+                         f"{key} has {percentage*100}% of records.")
+
+        except AssertionError as e:
+            logging.error(
+                f"Testing test_perform_feature_engineering: {key} does not "
+                f"have {percentage*100}% of records.")
 
 
 def test_train_models(train_models):
@@ -121,3 +169,4 @@ if __name__ == "__main__":
     test_import(cl.import_data)
     test_eda(cl.perform_eda)
     test_encoder_helper(cl.encoder_helper)
+    test_perform_feature_engineering(cl.perform_feature_engineering)

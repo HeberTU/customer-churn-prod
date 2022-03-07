@@ -51,14 +51,28 @@ class BankOutputSchema(BankInputSchema):
         return Churn.isin([0, 1])
 
 
-class BankMLSchema(BankOutputSchema):
+class BankMLSchema(pa.SchemaModel):
     """Bank data ml schema."""
 
+    Customer_Age: Series[int] = pa.Field(coerce=True, gt=0, lt=100)
     Gender_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Dependent_count: Series[int] = pa.Field(coerce=True)
     Education_Level_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
     Marital_Status_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
     Income_Category_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
     Card_Category_Churn: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Months_on_book: Series[int] = pa.Field(coerce=True)
+    Total_Relationship_Count: Series[int] = pa.Field(coerce=True, ge=0)
+    Months_Inactive_12_mon: Series[int] = pa.Field(coerce=True, ge=0)
+    Contacts_Count_12_mon: Series[int] = pa.Field(coerce=True, ge=0)
+    Credit_Limit: Series[float] = pa.Field(coerce=True, ge=0)
+    Total_Revolving_Bal: Series[int] = pa.Field(coerce=True, ge=0)
+    Avg_Open_To_Buy: Series[float] = pa.Field(coerce=True, ge=0)
+    Total_Amt_Chng_Q4_Q1: Series[float] = pa.Field(coerce=True, ge=0)
+    Total_Trans_Amt: Series[int] = pa.Field(coerce=True, ge=0)
+    Total_Trans_Ct: Series[int] = pa.Field(coerce=True, ge=0)
+    Total_Ct_Chng_Q4_Q1: Series[float] = pa.Field(coerce=True, ge=0)
+    Avg_Utilization_Ratio: Series[float] = pa.Field(coerce=True, ge=0, le=1)
 
 
 class BankMLSchemaInPlace(pa.SchemaModel):
@@ -83,7 +97,6 @@ class BankMLSchemaInPlace(pa.SchemaModel):
     Total_Trans_Ct: Series[int] = pa.Field(coerce=True, ge=0)
     Total_Ct_Chng_Q4_Q1: Series[float] = pa.Field(coerce=True, ge=0)
     Avg_Utilization_Ratio: Series[float] = pa.Field(coerce=True, ge=0, le=1)
-    Churn: Series[int] = pa.Field(coerce=True)
 
 
 def get_ml_schema(
