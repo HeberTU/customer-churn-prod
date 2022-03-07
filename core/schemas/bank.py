@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""Schemas for bank data.
-
-Created on: 05/03/2022
-@author: Heber Trujillo <heber.trj.urt@gmail.com>
-Licence,
-"""
 import pandera as pa
 from pandera.typing import Series
 
@@ -12,36 +5,37 @@ from pandera.typing import Series
 class BankInputSchema(pa.SchemaModel):
     """Bank data input schema."""
 
-    attrition_flag: Series[str] = pa.Field(coerce=True)
-    customer_age: Series[int] = pa.Field(coerce=True, gt=0, lt=100)
-    gender: Series[str] = pa.Field(coerce=True)
-    dependent_count: Series[int] = pa.Field(coerce=True)
-    marital_status: Series[str] = pa.Field(coerce=True)
-    income_category: Series[str] = pa.Field(coerce=True)
-    card_category: Series[str] = pa.Field(coerce=True)
-    months_on_book: Series[int] = pa.Field(coerce=True)
-    total_relationship_count: Series[int] = pa.Field(coerce=True, ge=0)
-    months_inactive_12_mon: Series[int] = pa.Field(coerce=True, ge=0)
-    contacts_count_12_mon: Series[int] = pa.Field(coerce=True, ge=0)
-    credit_limit: Series[float] = pa.Field(coerce=True, ge=0)
-    total_revolving_bal: Series[int] = pa.Field(coerce=True, ge=0)
-    avg_open_to_buy: Series[float] = pa.Field(coerce=True, ge=0)
-    total_amt_chng_q4_q1: Series[float] = pa.Field(coerce=True, ge=0)
-    total_trans_amt: Series[int] = pa.Field(coerce=True, ge=0)
-    total_trans_ct: Series[int] = pa.Field(coerce=True, ge=0)
-    total_ct_chng_q4_q1: Series[float] = pa.Field(coerce=True, ge=0)
-    avg_utilization_ratio: Series[float] = pa.Field(coerce=True, ge=0, le=1)
+    Attrition_Flag: Series[str] = pa.Field(coerce=True)
+    Customer_Age: Series[int] = pa.Field(coerce=True, gt=0, lt=100)
+    Gender: Series[str] = pa.Field(coerce=True)
+    Dependent_count: Series[int] = pa.Field(coerce=True)
+    Education_Level: Series[str] = pa.Field(coerce=True)
+    Marital_Status: Series[str] = pa.Field(coerce=True)
+    Income_Category: Series[str] = pa.Field(coerce=True)
+    Card_Category: Series[str] = pa.Field(coerce=True)
+    Months_on_book: Series[int] = pa.Field(coerce=True)
+    Total_Relationship_Count: Series[int] = pa.Field(coerce=True, ge=0)
+    Months_Inactive_12_mon: Series[int] = pa.Field(coerce=True, ge=0)
+    Contacts_Count_12_mon: Series[int] = pa.Field(coerce=True, ge=0)
+    Credit_Limit: Series[float] = pa.Field(coerce=True, ge=0)
+    Total_Revolving_Bal: Series[int] = pa.Field(coerce=True, ge=0)
+    Avg_Open_To_Buy: Series[float] = pa.Field(coerce=True, ge=0)
+    Total_Amt_Chng_Q4_Q1: Series[float] = pa.Field(coerce=True, ge=0)
+    Total_Trans_Amt: Series[int] = pa.Field(coerce=True, ge=0)
+    Total_Trans_Ct: Series[int] = pa.Field(coerce=True, ge=0)
+    Total_Ct_Chng_Q4_Q1: Series[float] = pa.Field(coerce=True, ge=0)
+    Avg_Utilization_Ratio: Series[float] = pa.Field(coerce=True, ge=0, le=1)
 
-    @pa.check("attrition_flag", name="valid_attrition")
-    def custom_check(cls, attrition_flag: Series[str]) -> Series[bool]:
-        return attrition_flag.isin(
+    @pa.check("Attrition_Flag", name="valid_attrition")
+    def custom_check(cls, Attrition_Flag: Series[str]) -> Series[bool]:
+        return Attrition_Flag.isin(
             ['Existing Customer', 'Attrited Customer'])
 
 class BankOutputSchema(BankInputSchema):
     """Bank data output schema."""
 
-    churn: Series[int] = pa.Field(coerce=True)
+    Churn: Series[int] = pa.Field(coerce=True)
 
-    @pa.check("churn", name="valid_churn")
-    def custom_check(cls, churn: Series[int]) -> Series[bool]:
-        return churn.isin([0, 1])
+    @pa.check("Churn", name="valid_churn")
+    def custom_check(cls, Churn: Series[int]) -> Series[bool]:
+        return Churn.isin([0, 1])
