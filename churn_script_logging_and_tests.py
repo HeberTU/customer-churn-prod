@@ -33,7 +33,7 @@ def test_import(import_data: Callable) -> None:
         raise err
 
 
-def test_eda(perform_eda: Callable):
+def test_eda(perform_eda: Callable) -> None:
     """
     test perform eda function
     """
@@ -64,10 +64,44 @@ def test_eda(perform_eda: Callable):
         logging.info("Testing perform_eda files: SUCCESS")
 
 
-def test_encoder_helper(encoder_helper):
+def test_encoder_helper(encoder_helper: Callable) -> None:
     """
     test encoder helper
     """
+    category_lst = [
+        'Gender',
+        'Education_Level',
+        'Marital_Status',
+        'Income_Category',
+        'Card_Category',
+    ]
+
+    df = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+
+    df = encoder_helper(
+        df=df,
+        category_lst=category_lst,
+        response='Churn'
+    )
+
+    for col in category_lst:
+
+        df_test = df.\
+            groupby(by=col).\
+            agg(
+                test_col=('Churn', 'mean'),
+                ref_val=(col + '_' + 'Churn', 'mean')
+        )
+
+        try:
+            assert all(df_test['test_col'] == df_test['ref_val'])
+            logging.info(f"Testing test_encoder_helper: SUCCESS "
+                         f"for '{col}' column.")
+
+        except AssertionError as e:
+            logging.error(
+                f"Testing test_encoder_helper: values for column:"
+                f" {col} do not match with Churn mean by category.")
 
 
 def test_perform_feature_engineering(perform_feature_engineering):
@@ -86,3 +120,4 @@ if __name__ == "__main__":
 
     test_import(cl.import_data)
     test_eda(cl.perform_eda)
+    test_encoder_helper(cl.encoder_helper)

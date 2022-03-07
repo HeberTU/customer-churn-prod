@@ -1,14 +1,23 @@
 # library doc string
 
 
-import matplotlib.pyplot as plt
 # import libraries
+from typing import List, Optional, Union
+
 import pandas as pd
 import pandera as pa
 import seaborn as sns
 from pandera.typing import DataFrame
 
-from core.schemas.bank import BankInputSchema, BankOutputSchema
+import matplotlib.pyplot as plt
+
+from core.schemas.bank import \
+    BankInputSchema, \
+    BankOutputSchema, \
+    BankMLSchema, \
+    BankMLSchemaInPlace, \
+    get_ml_schema
+
 from core.settings import settings
 
 
@@ -23,13 +32,11 @@ def import_data(pth: str) -> DataFrame[BankOutputSchema]:
     """
     df = pd.read_csv(pth)
 
-    df.columns = [col.lower() for col in df.columns]
-
     @pa.check_types
     def check_inputs(df: DataFrame[BankInputSchema]
                      ) -> DataFrame[BankOutputSchema]:
         return df.assign(
-            churn=lambda x: x.attrition_flag.isin(["Attrited Customer"]))
+            Churn=lambda x: x.Attrition_Flag.isin(["Attrited Customer"]))
 
     df = check_inputs(df)
 
@@ -45,7 +52,7 @@ def perform_eda(df: DataFrame[BankOutputSchema]) -> None:
     output:
             None
     """
-    HIST_COLUMNS = ["churn", "customer_age"]
+    HIST_COLUMNS = ["Churn", "Customer_Age"]
 
     # Histograms
     for col in HIST_COLUMNS:
@@ -55,12 +62,12 @@ def perform_eda(df: DataFrame[BankOutputSchema]) -> None:
 
     # Marital status distribution
     plt.figure(figsize=(20, 10))
-    df.marital_status.value_counts("normalize").plot(kind="bar")
+    df.Marital_Status.value_counts("normalize").plot(kind="bar")
     plt.savefig(fname=settings.EDA_PATH / "marital_status_distribution.png")
 
     # total transaction distribution
     plt.figure(figsize=(20, 10))
-    sns.distplot(df.total_trans_ct)
+    sns.distplot(df.Total_Trans_Ct)
     plt.savefig(fname=settings.EDA_PATH / "total_transaction_distribution.png")
 
     # Heatmap
@@ -69,10 +76,14 @@ def perform_eda(df: DataFrame[BankOutputSchema]) -> None:
     plt.savefig(fname=settings.EDA_PATH / "heatmap.png")
 
 
-def encoder_helper(df, category_lst, response):
+def encoder_helper(
+        df: DataFrame[BankOutputSchema],
+        category_lst: List[str],
+        response: Optional[str]
+) -> Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]]:
     """
     helper function to turn each categorical column into a new column with
-    propotion of churn for each category - associated with cell 15 from the
+    proportion of churn for each category - associated with cell 15 from the
     notebook
 
     input:
@@ -82,9 +93,39 @@ def encoder_helper(df, category_lst, response):
              used for naming variables or index y column]
 
     output:
-            df: pandas dataframe with new columns for
+            df: pandas dataframe with new columns for.
     """
-    pass
+    for col in category_lst:
+        df = pd.merge(
+            how='left',
+            left=df,
+            right=df.
+                groupby(by=col).
+                agg(temp=('Churn', 'mean')).
+                reset_index(),
+            on=col
+        )
+
+        if response:
+            df = df. \
+                rename(columns={'temp': col + '_' + response})
+
+        else:
+            df = df. \
+                drop(columns=col). \
+                rename(columns={'temp': col})
+
+    MLSchema = get_ml_schema(response=response)
+
+    @pa.check_types
+    def check_ml_schema(
+            df: DataFrame[MLSchema]
+    ) -> DataFrame[MLSchema]:
+        return df
+
+    df = check_ml_schema(df)
+
+    return df
 
 
 def perform_feature_engineering(df, response):
@@ -103,12 +144,12 @@ def perform_feature_engineering(df, response):
 
 
 def classification_report_image(
-    y_train,
-    y_test,
-    y_train_preds_lr,
-    y_train_preds_rf,
-    y_test_preds_lr,
-    y_test_preds_rf,
+        y_train,
+        y_test,
+        y_train_preds_lr,
+        y_train_preds_rf,
+        y_test_preds_lr,
+        y_test_preds_rf,
 ):
     """
     produces classification report for training and testing results and stores
