@@ -7,9 +7,36 @@ Licence,
 """
 import os
 from pathlib import Path
+from enum import Enum
 
 from pydantic import BaseSettings
 from pydantic.types import DirectoryPath
+
+import yaml
+
+class Model(str, Enum):
+    """Available Machine Learning Models."""
+
+    random_forest = 'random_forest'
+    logistic_regression = 'logistic_regression'
+
+
+class Config:
+    """Config class that reads config files from CONFIG_PATH."""
+
+    def __init__(self, config_path: DirectoryPath):
+        self.config_path = config_path
+
+        for file in os.listdir(self.config_path):
+            file_name, extension = file.split('.')
+            if extension == 'yaml':
+                with open(os.path.join(self.config_path, file), 'r') as f:
+                    setattr(
+                        self,
+                        file_name.strip(),
+                        yaml.load(f, Loader=yaml.FullLoader)
+                    )
+
 
 
 class Settings(BaseSettings):
@@ -45,4 +72,8 @@ class Settings(BaseSettings):
     if not os.path.exists(LOGS_PATH):
         os.makedirs(LOGS_PATH)
 
+
 settings = Settings()
+config = Config(
+    config_path=settings.CONFIG_PATH
+)
