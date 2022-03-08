@@ -7,18 +7,12 @@ Licence,
 """
 import os
 from pathlib import Path
-from enum import Enum
+
 
 from pydantic import BaseSettings
 from pydantic.types import DirectoryPath
 
 import yaml
-
-class Model(str, Enum):
-    """Available Machine Learning Models."""
-
-    random_forest = 'random_forest'
-    logistic_regression = 'logistic_regression'
 
 
 class Config:
@@ -36,7 +30,6 @@ class Config:
                         file_name.strip(),
                         yaml.load(f, Loader=yaml.FullLoader)
                     )
-
 
 
 class Settings(BaseSettings):
