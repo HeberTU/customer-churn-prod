@@ -31,7 +31,9 @@ class ModelFactory:
     random_forest: RandomForestClassifier = RandomForestClassifier(
         **config.hyperparameters.get('random_forest').get('init')
     )
-    logistic_regression: LogisticRegression = LogisticRegression()
+    logistic_regression: LogisticRegression = LogisticRegression(
+        **config.hyperparameters.get('logistic_regression').get('init')
+    )
 
 
 def get_model(
