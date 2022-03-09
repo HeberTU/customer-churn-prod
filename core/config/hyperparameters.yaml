@@ -9,4 +9,6 @@ random_forest:
       'criterion': ['gini', 'entropy']
     'cv': 5
 logistic_regression:
-  'no_parms': None
+  'init':
+    'max_iter': 500
+    'n_jobs': -1
