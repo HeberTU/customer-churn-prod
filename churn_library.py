@@ -4,6 +4,8 @@
 # import libraries
 from typing import List, Optional, Union, Tuple
 
+import numpy as np
+
 import pandas as pd
 import pandera as pa
 import seaborn as sns
@@ -12,6 +14,7 @@ from pandera.typing import DataFrame
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import plot_roc_curve, classification_report
 
 from core.schemas.bank import \
     BankInputSchema, \
@@ -21,6 +24,8 @@ from core.schemas.bank import \
     get_ml_schema
 
 from core.settings import settings
+from core.ml.factory import create_model, ModelType
+from core.ml.utils import save_model
 
 
 def import_data(pth: str) -> DataFrame[BankOutputSchema]:
@@ -168,13 +173,13 @@ def perform_feature_engineering(
 
 
 def classification_report_image(
-        y_train,
-        y_test,
-        y_train_preds_lr,
-        y_train_preds_rf,
-        y_test_preds_lr,
-        y_test_preds_rf,
-):
+        y_train: Union[pd.Series, np.ndarray],
+        y_test: Union[pd.Series, np.ndarray],
+        y_train_preds_lr: np.ndarray,
+        y_train_preds_rf: np.ndarray,
+        y_test_preds_lr: np.ndarray,
+        y_test_preds_rf: np.ndarray,
+) -> None:
     """
     produces classification report for training and testing results and stores
     report as image
@@ -190,7 +195,31 @@ def classification_report_image(
     output:
              None
     """
-    pass
+    results_dict = {
+        'Random Forest': [y_train_preds_rf, y_test_preds_rf],
+        'Logistic Regression': [y_train_preds_lr, y_test_preds_lr]
+    }
+
+    for model, preds in results_dict.items():
+        plt.clf()
+        plt.rc('figure', figsize=(5, 5))
+        plt.text(0.01, 1.25, str(f'{model} Train'), {'fontsize': 10},
+                 fontproperties='monospace')
+        plt.text(0.01, 0.05,
+                 str(classification_report(y_train, preds[0])),
+                 {'fontsize': 10},
+                 fontproperties='monospace')
+        plt.text(0.01, 0.6, str(f'{model} Test'), {'fontsize': 10},
+                 fontproperties='monospace')
+        plt.text(0.01, 0.7,
+                 str(classification_report(y_test, preds[1])),
+                 {'fontsize': 10},
+                 fontproperties='monospace')  # approach improved by OP -> monospace!
+        plt.axis('off')
+        plt.savefig(
+            settings.RESULTS_PATH / f"{model}_class_report.png"
+        )
+
 
 
 def feature_importance_plot(model, X_data, output_pth):
@@ -218,4 +247,43 @@ def train_models(X_train, X_test, y_train, y_test):
     output:
               None
     """
-    pass
+    cv_rfc = create_model(model_type=ModelType.random_forest)
+    lrc = create_model(model_type=ModelType.logistic_regression)
+
+    cv_rfc.fit(X_train, y_train)
+
+    lrc.fit(X_train, y_train)
+
+    y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
+    y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
+
+    y_train_preds_lr = lrc.predict(X_train)
+    y_test_preds_lr = lrc.predict(X_test)
+
+    # ROC Curve
+    plt.figure(figsize=(15, 8))
+    ax = plt.gca()
+    rfc_disp = plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8)
+    lrc_plot = plot_roc_curve(lrc, X_test, y_test, ax=ax, alpha=0.8)
+    plt.savefig(
+        settings.RESULTS_PATH / "roc_curves.png"
+    )
+
+    save_model(
+        model=cv_rfc.best_estimator_,
+        model_name='rfc_model'
+    )
+
+    save_model(
+        model=lrc,
+        model_name='logistic_model'
+    )
+
+    classification_report_image(
+        y_train=y_train,
+        y_test=y_test,
+        y_train_preds_lr=y_train_preds_lr,
+        y_train_preds_rf=y_train_preds_rf,
+        y_test_preds_lr=y_test_preds_lr,
+        y_test_preds_rf=y_test_preds_rf
+    )
