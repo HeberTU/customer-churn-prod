@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import plot_roc_curve, classification_report
 
+
 from core.schemas.bank import \
     BankInputSchema, \
     BankOutputSchema, \
@@ -23,8 +24,9 @@ from core.schemas.bank import \
     BankMLSchemaInPlace, \
     get_ml_schema
 
-from core.settings import settings
-from core.ml.factory import create_model, ModelType
+from core.settings import settings, DirectoryPath
+from core.ml.factory import create_model, ModelType, \
+    RandomForestClassifier, LogisticRegression
 from core.ml.utils import save_model
 
 
@@ -214,15 +216,17 @@ def classification_report_image(
         plt.text(0.01, 0.7,
                  str(classification_report(y_test, preds[1])),
                  {'fontsize': 10},
-                 fontproperties='monospace')  # approach improved by OP -> monospace!
+                 fontproperties='monospace')
         plt.axis('off')
         plt.savefig(
             settings.RESULTS_PATH / f"{model}_class_report.png"
         )
 
 
-
-def feature_importance_plot(model, X_data, output_pth):
+def feature_importance_plot(
+        model: RandomForestClassifier,
+        X_data: Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]],
+        output_pth: DirectoryPath):
     """
     creates and stores the feature importances in pth
     input:
@@ -233,10 +237,26 @@ def feature_importance_plot(model, X_data, output_pth):
     output:
              None
     """
-    pass
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[::-1]
+    names = [X_data.columns[i] for i in indices]
+
+    # Create plot
+    plt.figure(figsize=(20, 5))
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+    plt.bar(range(X_data.shape[1]), importances[indices])
+    plt.xticks(range(X_data.shape[1]), names, rotation=90)
+    plt.savefig(
+        output_pth / 'feature_importance.png')
 
 
-def train_models(X_train, X_test, y_train, y_test):
+def train_models(
+        X_train: Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]],
+        X_test: Union[DataFrame[BankMLSchema], DataFrame[BankMLSchemaInPlace]],
+        y_train: pd.Series,
+        y_test: pd.Series
+) -> None:
     """
     train, store model results: images + scores, and store models
     input:
@@ -263,8 +283,10 @@ def train_models(X_train, X_test, y_train, y_test):
     # ROC Curve
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
-    rfc_disp = plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8)
-    lrc_plot = plot_roc_curve(lrc, X_test, y_test, ax=ax, alpha=0.8)
+    rfc_disp = plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test,
+                              ax=ax, alpha=0.8)
+    lrc_plot = plot_roc_curve(lrc, X_test, y_test,
+                              ax=ax, alpha=0.8)
     plt.savefig(
         settings.RESULTS_PATH / "roc_curves.png"
     )
@@ -286,4 +308,10 @@ def train_models(X_train, X_test, y_train, y_test):
         y_train_preds_rf=y_train_preds_rf,
         y_test_preds_lr=y_test_preds_lr,
         y_test_preds_rf=y_test_preds_rf
+    )
+
+    feature_importance_plot(
+        model=cv_rfc.best_estimator_,
+        X_data=X_test,
+        output_pth=settings.RESULTS_PATH
     )
