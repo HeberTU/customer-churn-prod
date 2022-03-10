@@ -3,8 +3,11 @@ import logging
 from typing import Callable
 
 from math import isclose
+from sklearn.metrics import f1_score
 
 from core.settings import settings, config
+from core.ml.utils import load_model
+
 import churn_library as cl
 
 logging.basicConfig(
@@ -192,6 +195,26 @@ def test_train_models(train_models: Callable) -> None:
     else:
         for file in results_files:
             logging.info(f"Testing train_models: SUCCESS {file} created")
+
+    for model_file in model_files:
+
+        model = load_model(
+            model_name=model_file.split('.')[0]
+        )
+
+        score = f1_score(
+            y_true=y_test,
+            y_pred=model.predict(X_test)
+        )
+
+        try:
+            assert score > 0.5
+            logging.info(f"Testing train_models: SUCCESS {model_file} has "
+                         f"F1-score greater than 0.5")
+        except AssertionError:
+            logging.error(
+                f"Testing train_models: {model_file} has F1-score lower than 0.5")
+
 
 
 if __name__ == "__main__":
