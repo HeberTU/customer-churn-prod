@@ -1,0 +1,19 @@
+eda_files: ['churn_distribution.png',
+            'customer_age_distribution.png',
+            'heatmap.png',
+            'marital_status_distribution.png',
+            'total_transaction_distribution.png']
+category_vars: [
+        'Gender',
+        'Education_Level',
+        'Marital_Status',
+        'Income_Category',
+        'Card_Category']
+models_files: [
+    'rfc_model.pkl',
+    'logistic_model.pkl']
+results_files: [
+    'roc_curves.png',
+    'Random Forest_class_report.png',
+    'Logistic Regression_class_report.png',
+    'feature_importance.png']
