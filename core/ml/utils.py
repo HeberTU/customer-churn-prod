@@ -39,5 +39,25 @@ def save_model(
     )
 
 
+def load_model(
+        model_name: str
+) -> Union[RandomForestClassifier, LogisticRegression]:
+    """Load the pickled representation of the model.
 
+    This function loads the pickled representation of the model from the
+    setting's model path.
 
+    Args:
+        model_name: model name.
+
+    Returns:
+        model: Machine learning model.
+    """
+
+    model_name += '.pkl'
+
+    model = joblib.load(
+        filename=settings.MODELS_PATH / model_name
+    )
+
+    return model

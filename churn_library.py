@@ -21,7 +21,7 @@ from core.ml.utils import save_model
 from core.schemas.bank import (BankInputSchema, BankMLSchema,
                                BankMLSchemaInPlace, BankOutputSchema,
                                get_ml_schema)
-from core.settings import DirectoryPath, settings
+from core.settings import DirectoryPath, settings, config
 
 
 def import_data(pth: str) -> DataFrame[BankOutputSchema]:
@@ -309,4 +309,31 @@ def train_models(
 
     feature_importance_plot(
         model=cv_rfc.best_estimator_, X_data=X_test, output_pth=settings.RESULTS_PATH
+    )
+
+
+if __name__ == '__main__':
+
+    category_lst = getattr(config, 'test_parameters').get('category_vars', [])
+
+    bank_data = import_data(
+        pth=settings.DATA_PATH / 'bank_data.csv'
+    )
+
+    bank_data = encoder_helper(
+        bank_data=bank_data,
+        category_lst=category_lst,
+        response='Churn'
+    )
+
+    X_train, X_test, y_train, y_test = perform_feature_engineering(
+        bank_data=bank_data,
+        response='Churn'
+    )
+
+    train_models(
+        X_train=X_train,
+        X_test=X_test,
+        y_train=y_train,
+        y_test=y_test
     )
