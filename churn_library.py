@@ -21,7 +21,7 @@ from core.ml.utils import save_model
 from core.schemas.bank import (BankInputSchema, BankMLSchema,
                                BankMLSchemaInPlace, BankOutputSchema,
                                get_ml_schema)
-from core.settings import DirectoryPath, settings, config
+from core.settings import DirectoryPath, config, settings
 
 
 def import_data(pth: str) -> DataFrame[BankOutputSchema]:
@@ -312,28 +312,26 @@ def train_models(
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    category_lst = getattr(config, 'test_parameters').get('category_vars', [])
+    data = import_data(pth=settings.DATA_PATH / "bank_data.csv")
 
-    bank_data = import_data(
-        pth=settings.DATA_PATH / 'bank_data.csv'
-    )
-
-    bank_data = encoder_helper(
-        bank_data=bank_data,
-        category_lst=category_lst,
-        response='Churn'
+    data = encoder_helper(
+        bank_data=data,
+        category_lst=getattr(
+            config,
+            "test_parameters").get(
+            "category_vars",
+            []),
+        response="Churn",
     )
 
     X_train, X_test, y_train, y_test = perform_feature_engineering(
-        bank_data=bank_data,
-        response='Churn'
+        bank_data=data, response="Churn"
     )
 
     train_models(
         X_train=X_train,
         X_test=X_test,
         y_train=y_train,
-        y_test=y_test
-    )
+        y_test=y_test)
