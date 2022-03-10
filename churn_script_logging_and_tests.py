@@ -4,7 +4,7 @@ from typing import Callable
 
 from math import isclose
 
-from core.settings import settings
+from core.settings import settings, config
 import churn_library as cl
 
 logging.basicConfig(
@@ -20,15 +20,15 @@ def test_import(import_data: Callable) -> None:
     the other test functions
     """
     try:
-        df = import_data("./data/bank_data.csv")
+        bank_data = import_data("./data/bank_data.csv")
         logging.info("Testing import_data: SUCCESS")
     except FileNotFoundError as err:
         logging.error("Testing import_eda: The file wasn't found")
         raise err
 
     try:
-        assert df.shape[0] > 0
-        assert df.shape[1] > 0
+        assert bank_data.shape[0] > 0
+        assert bank_data.shape[1] > 0
     except AssertionError as err:
         logging.error(
             "Testing import_data: The file doesn't appear to have rows and columns")
@@ -39,13 +39,11 @@ def test_eda(perform_eda: Callable) -> None:
     """
     test perform eda function
     """
-    df = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
-    OUT_FILES = {'churn_distribution.png', 'customer_age_distribution.png',
-                 'heatmap.png', 'marital_status_distribution.png',
-                 'total_transaction_distribution.png'}
+    bank_data = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+    OUT_FILES = set(getattr(config, 'test_parameters').get('eda_files', {}))
 
     try:
-        perform_eda(df)
+        perform_eda(bank_data)
         logging.info("Testing import_data: SUCCESS")
     except KeyError as err:
         logging.error(
@@ -56,10 +54,10 @@ def test_eda(perform_eda: Callable) -> None:
     files_created = set(os.listdir(settings.EDA_PATH))
     missing_files = OUT_FILES - files_created
 
-    if len(missing_files)>0:
+    if len(missing_files) > 0:
         logging.error(
-            f"Testing perform_eda files: Files: {missing_files} not"
-            f" found at output path.")
+            f"Testing perform_eda: Files: {missing_files} not"
+            f" found at {settings.EDA_PATH}.")
         raise FileNotFoundError
 
     else:
@@ -70,33 +68,27 @@ def test_encoder_helper(encoder_helper: Callable) -> None:
     """
     test encoder helper
     """
-    category_lst = [
-        'Gender',
-        'Education_Level',
-        'Marital_Status',
-        'Income_Category',
-        'Card_Category',
-    ]
+    category_lst = getattr(config, 'test_parameters').get('category_vars', [])
 
-    df = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+    bank_data = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
 
-    df = encoder_helper(
-        df=df,
+    bank_data = encoder_helper(
+        bank_data=bank_data,
         category_lst=category_lst,
         response='Churn'
     )
 
     for col in category_lst:
 
-        df_test = df.\
-            groupby(by=col).\
+        bank_data_test = bank_data. \
+            groupby(by=col). \
             agg(
-                test_col=('Churn', 'mean'),
-                ref_val=(col + '_' + 'Churn', 'mean')
+            test_col=('Churn', 'mean'),
+            ref_val=(col + '_' + 'Churn', 'mean')
         )
 
         try:
-            assert all(df_test['test_col'] == df_test['ref_val'])
+            assert all(bank_data_test['test_col'] == bank_data_test['ref_val'])
             logging.info(f"Testing test_encoder_helper: SUCCESS "
                          f"for '{col}' column.")
 
@@ -112,31 +104,25 @@ def test_perform_feature_engineering(
     """
     test perform_feature_engineering
     """
-    category_lst = [
-        'Gender',
-        'Education_Level',
-        'Marital_Status',
-        'Income_Category',
-        'Card_Category',
-    ]
+    category_lst = getattr(config, 'test_parameters').get('category_vars', [])
 
-    df = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+    bank_data = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
 
-    df = cl.encoder_helper(
-        df=df,
+    bank_data = cl.encoder_helper(
+        bank_data=bank_data,
         category_lst=category_lst,
         response='Churn'
     )
 
     X_train, X_test, y_train, y_test = perform_feature_engineering(
-        df=df,
+        bank_data=bank_data,
         response='Churn'
     )
 
     validation_dict = {
         'X_train': X_train,
         'X_test': X_test,
-        'y_train':y_train,
+        'y_train': y_train,
         'y_test': y_test
     }
 
@@ -148,25 +134,69 @@ def test_perform_feature_engineering(
             percentage = 0.3
 
         try:
-            assert isclose(val.shape[0], df.shape[0] * percentage, abs_tol=1)
+            assert isclose(val.shape[0], bank_data.shape[0] * percentage, abs_tol=1)
             logging.info(f"Testing test_perform_feature_engineering: SUCCESS "
-                         f"{key} has {percentage*100}% of records.")
+                         f"{key} has {percentage * 100}% of records.")
 
         except AssertionError as e:
             logging.error(
                 f"Testing test_perform_feature_engineering: {key} does not "
-                f"have {percentage*100}% of records.")
+                f"have {percentage * 100}% of records.")
 
 
-def test_train_models(train_models):
+def test_train_models(train_models: Callable) -> None:
     """
     test train_models
     """
+    category_lst = getattr(config, 'test_parameters').get('category_vars', [])
+    model_files = set(getattr(config, 'test_parameters').get('models_files', {}))
+    results_files = set(getattr(config, 'test_parameters').get('results_files', {}))
+
+    bank_data = cl.import_data(settings.DATA_PATH / 'bank_data.csv')
+
+    bank_data = cl.encoder_helper(
+        bank_data=bank_data,
+        category_lst=category_lst,
+        response='Churn'
+    )
+
+    X_train, X_test, y_train, y_test = cl.perform_feature_engineering(
+        bank_data=bank_data,
+        response='Churn'
+    )
+
+    train_models(X_train, X_test, y_train, y_test)
+
+    model_files_created = set(os.listdir(settings.MODELS_PATH))
+    missing_files = model_files - model_files_created
+
+    if len(missing_files) > 0:
+        logging.error(
+            f"Testing train_models: Model(s) {missing_files} not"
+            f" found at {settings.MODELS_PATH}.")
+        raise FileNotFoundError
+
+    else:
+        for file in model_files:
+            logging.info(f"Testing train_models: SUCCESS {file} created")
+
+    results_files_created = set(os.listdir(settings.RESULTS_PATH))
+    missing_files = results_files - results_files_created
+
+    if len(missing_files) > 0:
+        logging.error(
+            f"Testing train_models: Results files(s) {missing_files} not"
+            f" found at {settings.RESULTS_PATH}.")
+        raise FileNotFoundError
+
+    else:
+        for file in results_files:
+            logging.info(f"Testing train_models: SUCCESS {file} created")
 
 
 if __name__ == "__main__":
-
     test_import(cl.import_data)
     test_eda(cl.perform_eda)
     test_encoder_helper(cl.encoder_helper)
     test_perform_feature_engineering(cl.perform_feature_engineering)
+    test_train_models(cl.train_models)
