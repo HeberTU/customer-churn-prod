@@ -37,9 +37,9 @@ def import_data(pth: str) -> DataFrame[BankOutputSchema]:
 
     @pa.check_types
     def check_inputs(
-        bank_data: DataFrame[BankInputSchema],
+        data_frame: DataFrame[BankInputSchema],
     ) -> DataFrame[BankOutputSchema]:
-        return bank_data.assign(
+        return data_frame.assign(
             Churn=lambda x: x.Attrition_Flag.isin(["Attrited Customer"])
         )
 
@@ -60,17 +60,20 @@ def perform_eda(bank_data: DataFrame[BankOutputSchema]) -> None:
     # Histograms
     for col in ["Churn", "Customer_Age"]:
         plt.figure(figsize=(20, 10))
-        bank_data[col].hist()
+        bank_data.hist(column=col)
         plt.savefig(fname=settings.EDA_PATH / f"{col}_distribution.png")
 
     # Marital status distribution
     plt.figure(figsize=(20, 10))
-    bank_data.Marital_Status.value_counts("normalize").plot(kind="bar")
+    bank_data.Marital_Status.value_counts("normalize").plot(
+        kind="bar", title="Marital status distribution"
+    )
     plt.savefig(fname=settings.EDA_PATH / "marital_status_distribution.png")
 
     # total transaction distribution
     plt.figure(figsize=(20, 10))
-    sns.distplot(bank_data.Total_Trans_Ct)
+    sns.distplot(bank_data.Total_Trans_Ct).set(
+        title="Total transaction distribution")
     plt.savefig(fname=settings.EDA_PATH / "total_transaction_distribution.png")
 
     # Heatmap
@@ -123,8 +126,9 @@ def encoder_helper(
     MLSchema = get_ml_schema(response=response)
 
     @pa.check_types
-    def check_ml_schema(bank_data: DataFrame[MLSchema]) -> DataFrame[MLSchema]:
-        return bank_data
+    def check_ml_schema(
+            data_frame: DataFrame[MLSchema]) -> DataFrame[MLSchema]:
+        return data_frame
 
     bank_data = check_ml_schema(bank_data)
 
@@ -315,6 +319,8 @@ def train_models(
 if __name__ == "__main__":
 
     data = import_data(pth=settings.DATA_PATH / "bank_data.csv")
+
+    perform_eda(bank_data=data)
 
     data = encoder_helper(
         bank_data=data,
